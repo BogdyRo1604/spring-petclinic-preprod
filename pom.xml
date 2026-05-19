@@ -1,3 +1,4 @@
+$content = @'
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -18,12 +19,11 @@
 
     <properties>
         <java.version>17</java.version>
-                <testcontainers.version>1.20.1</testcontainers.version>
+        <testcontainers.version>1.20.1</testcontainers.version>
     </properties>
 
     <dependencies>
 
-        <!-- SPRING BOOT -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -49,7 +49,6 @@
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
-        <!-- DATABASE -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -69,14 +68,12 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- TEST -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- TESTCONTAINERS -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -98,25 +95,16 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- GATLING (CORRECT & STABLE) -->
-        
-
-        
-
-        
-
-
+    </dependencies>
 
     <build>
         <plugins>
 
-            <!-- SPRING BOOT -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <!-- COMPILER -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -126,14 +114,11 @@
                 </configuration>
             </plugin>
 
-            <!-- GATLING MAVEN PLUGIN -->
-            <plugin>
-                <groupId>io.gatling</groupId>
-                <artifactId>gatling-maven-plugin</artifactId>
-                <version>4.9.0</version>
-            </plugin>
-
         </plugins>
     </build>
 
 </project>
+'@
+
+$path = "C:\Users\salag\Documents\spring-petclinic\pom.xml"
+[System.IO.File]::WriteAllText($path, $content, [System.Text.UTF8Encoding]::new($false))
