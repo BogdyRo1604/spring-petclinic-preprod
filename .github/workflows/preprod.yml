@@ -1,4 +1,4 @@
-name: CI/CD Préproduction
+name: CI/CD Preprod + Tests de performance
 
 on:
   push:
@@ -6,34 +6,78 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: 📥 Récupérer le code
+      - name: Recuperer le code
         uses: actions/checkout@v3
 
-      - name: ☕ Installer Java 17
+      - name: Installer Java 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: 🔨 Compiler l'application
+      - name: Compiler PetClinic
         run: ./mvnw package -DskipTests
 
-      - name: ✅ Vérifier le build
-        run: |
-          echo "Build terminé avec succès !"
-          ls -la target/*.jar
-
-      - name: 🐳 Construire l'image Docker
-        run: docker build -t petclinic-preprod:latest .
-
-      - name: 🚀 Démarrer l'environnement de préproduction
+      - name: Demarrer environnement preprod
         run: docker compose -f docker-compose.preprod.yml up -d
 
-      - name: 🏥 Vérifier que l'app répond
+      - name: Attendre que l'app demarre
+        run: sleep 40
+
+      - name: Verifier que l'app repond
+        run: curl --fail http://localhost:8081
+
+      - name: Installer Hey
         run: |
-          sleep 30
-          curl --fail http://localhost:8081 || exit 1
+          wget https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64 -O hey
+          chmod +x hey
+          sudo mv hey /usr/local/bin/
+
+      - name: Tests Hey
+        run: hey -n 200 -c 20 http://localhost:8081/ | tee resultats-hey.txt
+
+      - name: Installer K6
+        run: |
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6 -y
+
+      - name: Tests K6
+        run: |
+          cat > test-k6.js << 'EOF'
+          import http from 'k6/http';
+          import { sleep, check } from 'k6';
+          export let options = {
+            stages: [
+              { duration: '20s', target: 10 },
+              { duration: '30s', target: 30 },
+              { duration: '10s', target: 0 },
+            ],
+          };
+          export default function () {
+            let res = http.get('http://localhost:8081/');
+            check(res, { 'status 200': (r) => r.status === 200 });
+            sleep(1);
+          }
+          EOF
+          k6 run test-k6.js | tee resultats-k6.txt
+
+      - name: Tests Gatling
+        run: |
+          cd gatling-tests
+          ./mvnw gatling:test | tee ../resultats-gatling.txt
+
+      - name: Sauvegarder les resultats
+        uses: actions/upload-artifact@v3
+        with:
+          name: resultats-tests-performance
+          path: |
+            resultats-hey.txt
+            resultats-k6.txt
+            resultats-gatling.txt
+            gatling-tests/target/gatling/
