@@ -73,7 +73,7 @@ jobs:
           ./mvnw gatling:test | tee ../resultats-gatling.txt
 
       - name: Sauvegarder les resultats
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: resultats-tests-performance
           path: |
