@@ -20,7 +20,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Compiler PetClinic
-        run: ./mvnw package -DskipTests
+        run: ./mvnw package -DskipTests -Dmaven.test.skip=true
 
       - name: Demarrer environnement preprod
         run: docker compose -f docker-compose.preprod.yml up -d
