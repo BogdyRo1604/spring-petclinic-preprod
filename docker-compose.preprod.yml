@@ -1,0 +1,35 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=preprod
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - preprod-network
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: petclinic_preprod
+      MYSQL_USER: preprod_user
+      MYSQL_PASSWORD: preprod_pass
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - preprod-network
+
+networks:
+  preprod-network:
+    driver: bridge
