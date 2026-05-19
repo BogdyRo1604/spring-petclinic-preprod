@@ -1,0 +1,41 @@
+name: Performance Tests (Gatling)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  perf-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Build application
+        run: ./mvnw clean package -DskipTests
+
+      - name: Start Spring Boot (preprod)
+        run: |
+          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081 &
+          sleep 60
+
+      - name: Check app
+        run: curl http://localhost:8081/
+
+      - name: Run Gatling tests
+        run: ./mvnw gatling:test
+
+      - name: Upload Gatling report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatling-report
+          path: target/gatling
